@@ -20,10 +20,13 @@ const languageOptions = [
 ];
 
 export default function HomePage() {
+  const [mode, setMode] = useState<"auto" | "manual">("auto");
   const [poem, setPoem] = useState("");
+  const [existingTranslation, setExistingTranslation] = useState("");
   const [results, setResults] = useState<AnalysisResult[]>([]);
   const [loading, setLoading] = useState(false);
   const [sourceLanguage, setSourceLanguage] = useState("en");
+  const [manualTargetLanguage, setManualTargetLanguage] = useState("de");
   const [targetLanguages, setTargetLanguages] = useState<string[]>([
     "de",
     "ar",
@@ -48,11 +51,16 @@ export default function HomePage() {
 
   async function handleAnalyze() {
     if (!poem.trim()) {
-      alert("Please paste text or upload a file.");
+      alert("Please paste the original poem or upload a file.");
       return;
     }
 
-    if (targetLanguages.length === 0) {
+    if (mode === "manual" && !existingTranslation.trim()) {
+      alert("Please paste the existing translation.");
+      return;
+    }
+
+    if (mode === "auto" && targetLanguages.length === 0) {
       alert("Please select at least one comparison language.");
       return;
     }
@@ -66,8 +74,11 @@ export default function HomePage() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
+          mode,
           poem,
+          existingTranslation,
           sourceLanguage,
+          manualTargetLanguage,
           targetLanguages,
         }),
       });
@@ -86,7 +97,9 @@ export default function HomePage() {
       }
 
       if (!response.ok) {
-        throw new Error(data.error || `API request failed with status ${response.status}`);
+        throw new Error(
+          data.error || `API request failed with status ${response.status}`
+        );
       }
 
       setResults(data.results || []);
@@ -106,6 +119,28 @@ export default function HomePage() {
           Compare how poems shift across languages, layout, and script.
         </p>
 
+        <div className="mt-8 flex flex-wrap gap-4">
+          <label className="flex items-center gap-2 rounded-xl border border-gray-300 px-4 py-2">
+            <input
+              type="radio"
+              name="mode"
+              checked={mode === "auto"}
+              onChange={() => setMode("auto")}
+            />
+            <span>Auto Translate</span>
+          </label>
+
+          <label className="flex items-center gap-2 rounded-xl border border-gray-300 px-4 py-2">
+            <input
+              type="radio"
+              name="mode"
+              checked={mode === "manual"}
+              onChange={() => setMode("manual")}
+            />
+            <span>Compare Existing Translation</span>
+          </label>
+        </div>
+
         <div className="mt-8 grid gap-6 md:grid-cols-2">
           <div>
             <label className="mb-2 block text-sm font-medium">
@@ -113,7 +148,22 @@ export default function HomePage() {
             </label>
             <select
               value={sourceLanguage}
-              onChange={(e) => setSourceLanguage(e.target.value)}
+              onChange={(e) => {
+                const newSourceLanguage = e.target.value;
+                setSourceLanguage(newSourceLanguage);
+
+                if (manualTargetLanguage === newSourceLanguage) {
+                  const fallback =
+                    languageOptions.find(
+                      (lang) => lang.code !== newSourceLanguage
+                    )?.code || "de";
+                  setManualTargetLanguage(fallback);
+                }
+
+                setTargetLanguages((prev) =>
+                  prev.filter((lang) => lang !== newSourceLanguage)
+                );
+              }}
               className="w-full rounded-xl border border-gray-300 p-3"
             >
               {languageOptions.map((lang) => (
@@ -124,61 +174,103 @@ export default function HomePage() {
             </select>
           </div>
 
-          <div>
-            <label className="mb-2 block text-sm font-medium">
-              Upload poem file (.txt works best)
-            </label>
-            <input
-              type="file"
-              accept=".txt,text/plain"
-              onChange={handleFileUpload}
-              className="block w-full rounded-xl border border-gray-300 p-3"
-            />
-          </div>
+          {mode === "auto" ? (
+            <div>
+              <label className="mb-2 block text-sm font-medium">
+                Upload poem file (.txt works best)
+              </label>
+              <input
+                type="file"
+                accept=".txt,text/plain"
+                onChange={handleFileUpload}
+                className="block w-full rounded-xl border border-gray-300 p-3"
+              />
+            </div>
+          ) : (
+            <div>
+              <label className="mb-2 block text-sm font-medium">
+                Existing translation language
+              </label>
+              <select
+                value={manualTargetLanguage}
+                onChange={(e) => setManualTargetLanguage(e.target.value)}
+                className="w-full rounded-xl border border-gray-300 p-3"
+              >
+                {languageOptions
+                  .filter((lang) => lang.code !== sourceLanguage)
+                  .map((lang) => (
+                    <option key={lang.code} value={lang.code}>
+                      {lang.name}
+                    </option>
+                  ))}
+              </select>
+            </div>
+          )}
         </div>
 
         <div className="mt-6">
           <label className="mb-2 block text-sm font-medium">
-            Paste poem text
+            Paste original poem
           </label>
           <textarea
             value={poem}
             onChange={(e) => setPoem(e.target.value)}
-            placeholder="Paste your poem here..."
+            placeholder="Paste the original poem here..."
             rows={12}
             className="w-full rounded-2xl border border-gray-300 p-4 outline-none focus:border-black"
           />
         </div>
 
-        <div className="mt-6">
-          <label className="mb-3 block text-sm font-medium">
-            Comparison languages
-          </label>
-          <div className="flex flex-wrap gap-4">
-            {languageOptions
-              .filter((lang) => lang.code !== sourceLanguage)
-              .map((lang) => (
-                <label
-                  key={lang.code}
-                  className="flex items-center gap-2 rounded-xl border border-gray-300 px-3 py-2"
-                >
-                  <input
-                    type="checkbox"
-                    checked={targetLanguages.includes(lang.code)}
-                    onChange={() => handleTargetLanguageChange(lang.code)}
-                  />
-                  <span>{lang.name}</span>
-                </label>
-              ))}
+        {mode === "manual" && (
+          <div className="mt-6">
+            <label className="mb-2 block text-sm font-medium">
+              Paste existing translation
+            </label>
+            <textarea
+              value={existingTranslation}
+              onChange={(e) => setExistingTranslation(e.target.value)}
+              placeholder="Paste an existing translation here..."
+              rows={12}
+              className="w-full rounded-2xl border border-gray-300 p-4 outline-none focus:border-black"
+            />
           </div>
-        </div>
+        )}
+
+        {mode === "auto" && (
+          <div className="mt-6">
+            <label className="mb-3 block text-sm font-medium">
+              Comparison languages
+            </label>
+            <div className="flex flex-wrap gap-4">
+              {languageOptions
+                .filter((lang) => lang.code !== sourceLanguage)
+                .map((lang) => (
+                  <label
+                    key={lang.code}
+                    className="flex items-center gap-2 rounded-xl border border-gray-300 px-3 py-2"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={targetLanguages.includes(lang.code)}
+                      onChange={() => handleTargetLanguageChange(lang.code)}
+                    />
+                    <span>{lang.name}</span>
+                  </label>
+                ))}
+            </div>
+          </div>
+        )}
 
         <button
           onClick={handleAnalyze}
           disabled={loading}
           className="mt-6 rounded-xl bg-black px-5 py-3 text-white disabled:opacity-50"
         >
-          {loading ? "Analyzing..." : "Analyze Poem"}
+          {loading
+            ? "Analyzing..."
+            : mode === "auto"
+            ? "Analyze Poem"
+            : "Compare Translation"}
         </button>
 
         {results.length > 0 && (
@@ -194,7 +286,7 @@ export default function HomePage() {
                 </p>
 
                 <pre
-                  dir={result.language === "Arabic" ? "rtl" : "ltr"}
+                  dir={result.language.toLowerCase().includes("arabic") ? "rtl" : "ltr"}
                   className="mt-4 whitespace-pre-wrap font-sans text-sm leading-6"
                 >
                   {result.text}

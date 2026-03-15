@@ -17,6 +17,15 @@ const languageMap: Record<string, string> = {
   hi: "Hindi",
 };
 
+type RequestBody = {
+  mode?: "auto" | "manual";
+  poem?: string;
+  existingTranslation?: string;
+  sourceLanguage?: string;
+  manualTargetLanguage?: string;
+  targetLanguages?: string[];
+};
+
 type AnalysisResult = {
   language: string;
   text: string;
@@ -26,7 +35,14 @@ type AnalysisResult = {
 
 export async function POST(req: Request) {
   try {
-    const { poem, sourceLanguage, targetLanguages } = await req.json();
+    const {
+      mode = "auto",
+      poem,
+      existingTranslation,
+      sourceLanguage,
+      manualTargetLanguage,
+      targetLanguages,
+    }: RequestBody = await req.json();
 
     if (!poem || typeof poem !== "string") {
       return NextResponse.json(
@@ -42,6 +58,55 @@ export async function POST(req: Request) {
       );
     }
 
+    const originalLanguageName = languageMap[sourceLanguage] || sourceLanguage;
+
+    if (mode === "manual") {
+      if (!existingTranslation || typeof existingTranslation !== "string") {
+        return NextResponse.json(
+          { error: "Missing or invalid existing translation" },
+          { status: 400 }
+        );
+      }
+
+      if (
+        !manualTargetLanguage ||
+        typeof manualTargetLanguage !== "string" ||
+        manualTargetLanguage === sourceLanguage
+      ) {
+        return NextResponse.json(
+          { error: "Missing or invalid translation language" },
+          { status: 400 }
+        );
+      }
+
+      const translationLanguageName =
+        languageMap[manualTargetLanguage] || manualTargetLanguage;
+
+      const analysis = analyzePoemShape(
+        poem,
+        existingTranslation,
+        translationLanguageName
+      );
+
+      const manualResults: AnalysisResult[] = [
+        {
+          language: `${originalLanguageName} (Original)`,
+          text: poem,
+          warnings: [],
+          score: 100,
+        },
+        {
+          language: `${translationLanguageName} (Existing Translation)`,
+          text: existingTranslation,
+          warnings: analysis.warnings,
+          score: analysis.score,
+        },
+      ];
+      return NextResponse.json({
+        results: manualResults,
+      });
+    }
+
     if (!Array.isArray(targetLanguages) || targetLanguages.length === 0) {
       return NextResponse.json(
         { error: "Please choose at least one target language" },
@@ -49,16 +114,20 @@ export async function POST(req: Request) {
       );
     }
 
+    const filteredTargetLanguages = targetLanguages.filter(
+      (code) => code !== sourceLanguage
+    );
+
     const results: AnalysisResult[] = [
       {
-        language: languageMap[sourceLanguage] || sourceLanguage,
+        language: `${originalLanguageName} (Original)`,
         text: poem,
         warnings: [],
         score: 100,
       },
     ];
 
-    for (const code of targetLanguages) {
+    for (const code of filteredTargetLanguages) {
       const translated = await lingo.localizeText(poem, {
         sourceLocale: sourceLanguage,
         targetLocale: code,
