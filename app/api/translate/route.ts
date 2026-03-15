@@ -1,13 +1,8 @@
 import { NextResponse } from "next/server";
 import { LingoDotDevEngine } from "lingo.dev/sdk";
-import { analyzePoemShape } from "@/lib/analysis";
+import { analyzeTranslationWithAI } from "@/lib/aiAnalysis";
 
-const lingo = new LingoDotDevEngine({
-  apiKey: process.env.LINGODOTDEV_API_KEY,
-  engineId: process.env.LINGODOTDEV_ENGINE_ID,
-});
-
-const languageMap: Record<string, string> = {
+const SUPPORTED_LANGUAGES = {
   en: "English",
   de: "German",
   ar: "Arabic",
@@ -15,7 +10,9 @@ const languageMap: Record<string, string> = {
   fr: "French",
   es: "Spanish",
   hi: "Hindi",
-};
+} as const;
+
+type SupportedLocale = keyof typeof SUPPORTED_LANGUAGES;
 
 type RequestBody = {
   mode?: "auto" | "manual";
@@ -30,11 +27,34 @@ type AnalysisResult = {
   language: string;
   text: string;
   warnings: string[];
+  meaningWarnings: string[];
   score: number;
 };
 
+function isSupportedLocale(value: string): value is SupportedLocale {
+  return value in SUPPORTED_LANGUAGES;
+}
+
 export async function POST(req: Request) {
   try {
+    const apiKey = process.env.LINGODOTDEV_API_KEY;
+    const engineId = process.env.LINGODOTDEV_ENGINE_ID;
+
+    if (!apiKey || !engineId) {
+      return NextResponse.json(
+        {
+          error:
+            "Missing LINGODOTDEV_API_KEY or LINGODOTDEV_ENGINE_ID in .env.local",
+        },
+        { status: 500 }
+      );
+    }
+
+    const lingo = new LingoDotDevEngine({
+      apiKey,
+      engineId,
+    });
+
     const {
       mode = "auto",
       poem,
@@ -51,14 +71,18 @@ export async function POST(req: Request) {
       );
     }
 
-    if (!sourceLanguage || typeof sourceLanguage !== "string") {
+    if (
+      !sourceLanguage ||
+      typeof sourceLanguage !== "string" ||
+      !isSupportedLocale(sourceLanguage)
+    ) {
       return NextResponse.json(
         { error: "Missing or invalid source language" },
         { status: 400 }
       );
     }
 
-    const originalLanguageName = languageMap[sourceLanguage] || sourceLanguage;
+    const sourceLanguageName = SUPPORTED_LANGUAGES[sourceLanguage];
 
     if (mode === "manual") {
       if (!existingTranslation || typeof existingTranslation !== "string") {
@@ -71,6 +95,7 @@ export async function POST(req: Request) {
       if (
         !manualTargetLanguage ||
         typeof manualTargetLanguage !== "string" ||
+        !isSupportedLocale(manualTargetLanguage) ||
         manualTargetLanguage === sourceLanguage
       ) {
         return NextResponse.json(
@@ -79,32 +104,33 @@ export async function POST(req: Request) {
         );
       }
 
-      const translationLanguageName =
-        languageMap[manualTargetLanguage] || manualTargetLanguage;
+      const targetLanguageName = SUPPORTED_LANGUAGES[manualTargetLanguage];
 
-      const analysis = analyzePoemShape(
-        poem,
-        existingTranslation,
-        translationLanguageName
-      );
+      const analysis = await analyzeTranslationWithAI({
+        original: poem,
+        translated: existingTranslation,
+        sourceLanguageName,
+        targetLanguageName,
+      });
 
       const manualResults: AnalysisResult[] = [
         {
-          language: `${originalLanguageName} (Original)`,
+          language: `${sourceLanguageName} (Original)`,
           text: poem,
           warnings: [],
+          meaningWarnings: [],
           score: 100,
         },
         {
-          language: `${translationLanguageName} (Existing Translation)`,
+          language: `${targetLanguageName} (Existing Translation)`,
           text: existingTranslation,
           warnings: analysis.warnings,
+          meaningWarnings: analysis.meaningWarnings,
           score: analysis.score,
         },
       ];
-      return NextResponse.json({
-        results: manualResults,
-      });
+
+      return NextResponse.json({ results: manualResults });
     }
 
     if (!Array.isArray(targetLanguages) || targetLanguages.length === 0) {
@@ -114,37 +140,63 @@ export async function POST(req: Request) {
       );
     }
 
-    const filteredTargetLanguages = targetLanguages.filter(
-      (code) => code !== sourceLanguage
+    const filteredTargetLanguages: SupportedLocale[] = targetLanguages.filter(
+      (code): code is SupportedLocale =>
+        typeof code === "string" &&
+        isSupportedLocale(code) &&
+        code !== sourceLanguage
     );
 
-    const results: AnalysisResult[] = [
-      {
-        language: `${originalLanguageName} (Original)`,
-        text: poem,
-        warnings: [],
-        score: 100,
-      },
-    ];
-
-    for (const code of filteredTargetLanguages) {
-      const translated = await lingo.localizeText(poem, {
-        sourceLocale: sourceLanguage,
-        targetLocale: code,
-      });
-
-      const languageName = languageMap[code] || code;
-      const analysis = analyzePoemShape(poem, translated, languageName);
-
-      results.push({
-        language: languageName,
-        text: translated,
-        warnings: analysis.warnings,
-        score: analysis.score,
-      });
+    if (filteredTargetLanguages.length === 0) {
+      return NextResponse.json(
+        { error: "Please choose at least one valid target language" },
+        { status: 400 }
+      );
     }
 
-    return NextResponse.json({ results });
+    const translatedTexts = await Promise.all(
+      filteredTargetLanguages.map((code) =>
+        lingo.localizeText(poem, {
+          sourceLocale: sourceLanguage,
+          targetLocale: code,
+        })
+      )
+    );
+
+    const analyzedResults: AnalysisResult[] = await Promise.all(
+      filteredTargetLanguages.map(async (code, index) => {
+        const translated = translatedTexts[index];
+        const targetLanguageName = SUPPORTED_LANGUAGES[code];
+
+        const analysis = await analyzeTranslationWithAI({
+          original: poem,
+          translated,
+          sourceLanguageName,
+          targetLanguageName,
+        });
+
+        return {
+          language: targetLanguageName,
+          text: translated,
+          warnings: analysis.warnings,
+          meaningWarnings: analysis.meaningWarnings,
+          score: analysis.score,
+        };
+      })
+    );
+
+    const autoResults: AnalysisResult[] = [
+      {
+        language: `${sourceLanguageName} (Original)`,
+        text: poem,
+        warnings: [],
+        meaningWarnings: [],
+        score: 100,
+      },
+      ...analyzedResults,
+    ];
+
+    return NextResponse.json({ results: autoResults });
   } catch (error) {
     console.error("Route error:", error);
 

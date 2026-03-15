@@ -9,8 +9,10 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "groq-sdk": "^1.1.1",
     "lingo.dev": "^0.133.2",
     "next": "16.1.6",
+    "openai": "^6.29.0",
     "react": "19.2.3",
     "react-dom": "19.2.3"
   },

@@ -6,6 +6,7 @@ type AnalysisResult = {
   language: string;
   text: string;
   warnings: string[];
+  meaningWarnings: string[];
   score: number;
 };
 
@@ -116,7 +117,7 @@ export default function HomePage() {
       <div className="mx-auto max-w-6xl">
         <h1 className="text-4xl font-bold">VerseShift</h1>
         <p className="mt-2 text-gray-600">
-          Compare how poems shift across languages, layout, and script.
+          Compare how poems shift across languages, layout, and meaning.
         </p>
 
         <div className="mt-8 flex flex-wrap gap-4">
@@ -269,8 +270,8 @@ export default function HomePage() {
           {loading
             ? "Analyzing..."
             : mode === "auto"
-            ? "Analyze Poem"
-            : "Compare Translation"}
+              ? "Analyze Poem"
+              : "Compare Translation"}
         </button>
 
         {results.length > 0 && (
@@ -286,7 +287,11 @@ export default function HomePage() {
                 </p>
 
                 <pre
-                  dir={result.language.toLowerCase().includes("arabic") ? "rtl" : "ltr"}
+                  dir={
+                    result.language.toLowerCase().includes("arabic")
+                      ? "rtl"
+                      : "ltr"
+                  }
                   className="mt-4 whitespace-pre-wrap font-sans text-sm leading-6"
                 >
                   {result.text}
@@ -297,6 +302,17 @@ export default function HomePage() {
                     <h3 className="font-medium">Warnings</h3>
                     <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-gray-700">
                       {result.warnings.map((warning, index) => (
+                        <li key={index}>{warning}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {result.meaningWarnings.length > 0 && (
+                  <div className="mt-5">
+                    <h3 className="font-medium">Meaning Shift Risks</h3>
+                    <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-gray-700">
+                      {result.meaningWarnings.map((warning, index) => (
                         <li key={index}>{warning}</li>
                       ))}
                     </ul>
