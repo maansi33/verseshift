@@ -7,11 +7,15 @@ const lingo = new LingoDotDevEngine({
   engineId: process.env.LINGODOTDEV_ENGINE_ID,
 });
 
-const languages = [
-  { code: "de", name: "German" },
-  { code: "ar", name: "Arabic" },
-  { code: "ja", name: "Japanese" },
-];
+const languageMap: Record<string, string> = {
+  en: "English",
+  de: "German",
+  ar: "Arabic",
+  ja: "Japanese",
+  fr: "French",
+  es: "Spanish",
+  hi: "Hindi",
+};
 
 type AnalysisResult = {
   language: string;
@@ -22,7 +26,7 @@ type AnalysisResult = {
 
 export async function POST(req: Request) {
   try {
-    const { poem } = await req.json();
+    const { poem, sourceLanguage, targetLanguages } = await req.json();
 
     if (!poem || typeof poem !== "string") {
       return NextResponse.json(
@@ -31,25 +35,40 @@ export async function POST(req: Request) {
       );
     }
 
+    if (!sourceLanguage || typeof sourceLanguage !== "string") {
+      return NextResponse.json(
+        { error: "Missing or invalid source language" },
+        { status: 400 }
+      );
+    }
+
+    if (!Array.isArray(targetLanguages) || targetLanguages.length === 0) {
+      return NextResponse.json(
+        { error: "Please choose at least one target language" },
+        { status: 400 }
+      );
+    }
+
     const results: AnalysisResult[] = [
       {
-        language: "English",
+        language: languageMap[sourceLanguage] || sourceLanguage,
         text: poem,
         warnings: [],
         score: 100,
       },
     ];
 
-    for (const lang of languages) {
+    for (const code of targetLanguages) {
       const translated = await lingo.localizeText(poem, {
-        sourceLocale: "en",
-        targetLocale: lang.code,
+        sourceLocale: sourceLanguage,
+        targetLocale: code,
       });
 
-      const analysis = analyzePoemShape(poem, translated, lang.name);
+      const languageName = languageMap[code] || code;
+      const analysis = analyzePoemShape(poem, translated, languageName);
 
       results.push({
-        language: lang.name,
+        language: languageName,
         text: translated,
         warnings: analysis.warnings,
         score: analysis.score,
