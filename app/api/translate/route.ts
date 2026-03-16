@@ -10,6 +10,15 @@ const SUPPORTED_LANGUAGES = {
   fr: "French",
   es: "Spanish",
   hi: "Hindi",
+  ur: "Urdu",
+  pa: "Punjabi",
+  ko: "Korean",
+  zh: "Chinese",
+  it: "Italian",
+  pt: "Portuguese",
+  ru: "Russian",
+  tr: "Turkish",
+  bn: "Bengali",
 } as const;
 
 type SupportedLocale = keyof typeof SUPPORTED_LANGUAGES;
