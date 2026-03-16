@@ -159,7 +159,7 @@ Open [http://localhost:3000](http://localhost:3000)
 | Feature | Preview |
 |---|---|
 | Home | ![](screenshots/home.png) |
-| Translation Analysis | ![](screenshots/analysis.png) |
+| Translation Analysis | ![](screenshots/analysis1.png) |
 | Share Card | ![](screenshots/card.png) |
 
 ## Built With
