@@ -1,6 +1,6 @@
 # VerseShift
 
-> *What survives when a poem crosses a language?*
+> What survives when a poem crosses a language?
 
 **VerseShift** is a poetry translation analysis tool that translates your verse and shows you *where* the translation breaks down, where meaning drifts, and where culture gets lost in the crossing.
 
@@ -8,18 +8,18 @@ Built for the **[Lingo.dev Multilingual Hackathon #3](https://lu.ma/lingohackath
 
 ## Features
 
-### Poem of the Day
-### Translation Voice (Brand Voice)
-### Glossary Lock
-### Auto Translate + Analysis (16 Languages)
-### Drift Chain — *The Telephone Game of Poetry*
-### Cultural Idiom Equivalence
-### Audio Playback
-### Download & Export
-### Poetry Penpal Room
+1. Poem of the Day
+2. Translation Voice (Brand Voice)
+3. Glossary Lock
+4. Auto Translate + Analysis (16 Languages)
+5. Drift Chain — *The Telephone Game of Poetry*
+6. Cultural Idiom Equivalence
+7. Audio Playback
+8. Download & Export
+9. Poetry Penpal Room
 ---
 
-## 🛠 Tech Stack
+## Tech Stack
 
 | Layer | Technology |
 |---|---|
@@ -152,7 +152,6 @@ Open [http://localhost:3000](http://localhost:3000)
 | `tr` | Turkish | — |
 | `bn` | Bengali | — |
 
-More to be added soon.
 ---
 
 ## Screenshots
