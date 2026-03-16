@@ -160,7 +160,7 @@ Open [http://localhost:3000](http://localhost:3000)
 |---|---|
 | Home | ![](screenshots/home.png) |
 | Translation Analysis | ![](screenshots/analysis1.png) |
-| Share Card | ![](screenshots/card.png) |
+| Share Card | ![](screenshots/verseshift-punjabi.png) |
 
 ## Built With
 
