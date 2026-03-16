@@ -160,7 +160,7 @@ Open [http://localhost:3000](http://localhost:3000)
 |---|---|
 | Home | ![](screenshots/home.png) |
 | Translation Analysis | ![](screenshots/analysis.png) |
-| Poetry Penpal | ![](screenshots/penpal.png) |
+| Share Card | ![](screenshots/card.png) |
 
 ## Built With
 
