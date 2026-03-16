@@ -156,15 +156,12 @@ Open [http://localhost:3000](http://localhost:3000)
 
 ## Screenshots
 
-
 | Feature | Preview |
 |---|---|
-| Translation Analysis | `screenshots/analysis.png` |
-| Drift Chain | `screenshots/drift.png` |
-| Idiom Equivalence | `screenshots/idioms.png` |
-| Share Card | `screenshots/card.png` |
-
----
+| Translation Analysis | ![](screenshots/analysis.png) |
+| Drift Chain | ![](screenshots/drift.png) |
+| Idiom Equivalence | ![](screenshots/idioms.png) |
+| Share Card | ![](screenshots/card.png) |
 
 ## Built With
 
