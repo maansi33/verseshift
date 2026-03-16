@@ -158,10 +158,9 @@ Open [http://localhost:3000](http://localhost:3000)
 
 | Feature | Preview |
 |---|---|
+| Home | ![](screenshots/home.png) |
 | Translation Analysis | ![](screenshots/analysis.png) |
-| Drift Chain | ![](screenshots/drift.png) |
-| Idiom Equivalence | ![](screenshots/idioms.png) |
-| Share Card | ![](screenshots/card.png) |
+| Poetry Penpal | ![](screenshots/penpal.png) |
 
 ## Built With
 
