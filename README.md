@@ -1,36 +1,190 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# VerseShift
+
+> *What survives when a poem crosses a language?*
+
+**VerseShift** is a poetry translation analysis tool that translates your verse and shows you *where* the translation breaks down, where meaning drifts, and where culture gets lost in the crossing.
+
+Built for the **[Lingo.dev Multilingual Hackathon #3](https://lu.ma/lingohackathon3)** · March 2025
+
+## Features
+
+### Poem of the Day
+### Translation Voice (Brand Voice)
+### Glossary Lock
+### Auto Translate + Analysis (16 Languages)
+### Drift Chain — *The Telephone Game of Poetry*
+### Cultural Idiom Equivalence
+### Audio Playback
+### Download & Export
+### Poetry Penpal Room
+---
+
+## 🛠 Tech Stack
+
+| Layer | Technology |
+|---|---|
+| **Framework** | [Next.js 14](https://nextjs.org) (App Router) |
+| **Translation** | [Lingo.dev SDK](https://lingo.dev) — `lingo.dev/sdk` |
+| **AI Analysis** | [Groq](https://groq.com) with `llama-3.1-8b-instant` |
+| **Styling** | Vanilla CSS with CSS Variables (no framework) |
+| **Typography** | Cormorant Garamond · Jost · Scheherazade New (Google Fonts) |
+| **Audio** | Web Speech API (browser-native, zero cost) |
+| **Runtime** | Node.js 18+ |
+
+### Lingo.dev Integration
+
+VerseShift uses Lingo.dev in three distinct ways:
+
+1. **`lingo.localizeText()`** — Core translation across all 16 supported locales, used in both the Auto Translate and Drift Chain features
+2. **Glossary Lock pattern** — Words wrapped in `«»` markers before being passed to Lingo, preserving untranslatable terms through every hop
+3. **Brand Voice injection** — Style persona prompts prepended to poem text before localization, mimicking Lingo.dev's brand voice capability
+
+---
+
+## Project Structure
+
+```
+verseshift/
+├── app/
+│   ├── page.tsx                  # Main UI — all features
+│   ├── layout.tsx
+│   └── api/
+│       ├── translate/
+│       │   └── route.ts          # Auto translate + analysis
+│       ├── drift/
+│       │   └── route.ts          # Drift chain engine
+│       ├── idioms/
+│       │   └── route.ts          # Cultural idiom equivalence
+│       └── rooms/
+│           ├── route.ts          # Penpal room create/join/read
+│           └── message/
+│               └── route.ts      # Send room message
+├── lib/
+│   ├── aiAnalysis.ts             # Groq analysis (score + warnings)
+│   └── roomStore.ts              # In-memory room state
+└── .env.local                    # API keys (see setup below)
+```
+
+---
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
+
+- Node.js 18+
+- A [Lingo.dev](https://lingo.dev) account with an API key and Engine ID
+- A [Groq](https://console.groq.com) API key (free tier works)
+
+### Installation
+
+```bash
+# Clone the repo
+git clone https://github.com/yourusername/verseshift.git
+cd verseshift
+
+# Install dependencies
+npm install
+
+# Set up environment variables
+cp .env.example .env.local
+```
+
+### Environment Variables
+
+Create a `.env.local` file in the root:
+
+```env
+LINGODOTDEV_API_KEY=your_lingo_api_key_here
+LINGODOTDEV_ENGINE_ID=your_lingo_engine_id_here
+GROQ_API_KEY=your_groq_api_key_here
+```
+
+### Run Locally
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+---
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## How to Use
 
-## Learn More
+### Basic Translation
+1. Select your **source language**
+2. Choose a **translation voice** (optional — try *Lyrical* or *Minimalist*)
+3. Add any **locked words** that should never be translated
+4. Paste your poem (or load the Poem of the Day)
+5. Select target languages and click **Analyse Poem**
 
-To learn more about Next.js, take a look at the following resources:
+### Drift Chain
+1. Enter a poem in the Analysis section
+2. Navigate to **Drift Chain**
+3. Build a chain by adding languages in sequence (e.g. FR → JA → AR → EN)
+4. Click **Run Drift Chain** to watch your poem evolve
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### Poetry Penpal Room
+1. Enter your name and preferred reading language
+2. Click **Create Room** — share the code or link with a friend
+3. Each person writes in their own language — everyone reads in theirs
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+---
 
-## Deploy on Vercel
+## Supported Languages
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+| Code | Language | RTL |
+|------|----------|-----|
+| `en` | English | — |
+| `de` | German | — |
+| `ar` | Arabic | ✓ |
+| `ja` | Japanese | — |
+| `fr` | French | — |
+| `es` | Spanish | — |
+| `hi` | Hindi | — |
+| `ur` | Urdu | ✓ |
+| `pa` | Punjabi | — |
+| `ko` | Korean | — |
+| `zh` | Chinese | — |
+| `it` | Italian | — |
+| `pt` | Portuguese | — |
+| `ru` | Russian | — |
+| `tr` | Turkish | — |
+| `bn` | Bengali | — |
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+More to be added soon.
+---
+
+## Screenshots
+
+
+| Feature | Preview |
+|---|---|
+| Translation Analysis | `screenshots/analysis.png` |
+| Drift Chain | `screenshots/drift.png` |
+| Idiom Equivalence | `screenshots/idioms.png` |
+| Share Card | `screenshots/card.png` |
+
+---
+
+## Built With
+
+- [Lingo.dev](https://lingo.dev) — Translation infrastructure
+- [Groq](https://groq.com) — Fast LLM inference
+- [Next.js](https://nextjs.org) — Framework
+- [Google Fonts](https://fonts.google.com) — Cormorant Garamond, Jost, Scheherazade New
+
+---
+
+## License
+
+MIT — see [LICENSE](LICENSE)
+
+---
+
+<div align="center">
+
+*"Poetry is what gets lost in translation." — Robert Frost*
+
+
+</div>
